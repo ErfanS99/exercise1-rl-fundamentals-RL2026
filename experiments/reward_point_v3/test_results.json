@@ -1,0 +1,30 @@
+{
+    "experiment": "reward_point_v3",
+    "reward_mode": "point",
+    "target_position_m": 0.8,
+    "test_episode_limit": 1000,
+    "test_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+    ],
+    "episode_lengths": [
+        1000,
+        1000,
+        1000,
+        1000,
+        1000
+    ],
+    "position_mae_m": [
+        0.443,
+        0.3,
+        0.414,
+        0.417,
+        0.413
+    ],
+    "mean_position_mae_m": 0.3974,
+    "successful_episodes": 5,
+    "notes": "Reliable balancing, slow convergence and persistent target overshoot."
+}

@@ -1,0 +1,13 @@
+{
+    "test": null,
+    "env": "CartPole-v1",
+    "train_episodes": 800,
+    "render_training": false,
+    "render_test": false,
+    "central_point": 0.8,
+    "random_policy": false,
+    "learning_rate": 0.01,
+    "max_episode_steps": 200,
+    "experiment": "reward_point_v3",
+    "reward_mode": "point"
+}

@@ -68,13 +68,47 @@ def apply_state_controller(K, x):
     else:
         return 0, u     # if force_dem <= 0 -> move cart left
 
-def multiple_R(env, mp, mk, l, g, time_sleep=False, terminate=True):
+def multiple_R(env, mp, mk, l, g, time_sleep=False,
+               terminate=True, seed=0):
     """
     Vary the value of R within the range [0.01, 0.1, 10, 100] and plot the forces 
     """
-    #TODO: 
-    # ...
-    return
+    R_values = [0.01, 0.1, 10, 100]
+    all_forces = {}
+
+    A, B = linerized_cartpole_system(mp, mk, l, g)
+
+    for R_value in R_values:
+
+        # Same initial conditions for every experiment
+        obs, _ = env.reset(seed=seed)
+        K = optimal_controller(A, B, R_value)
+
+        forces = []
+
+        for i in range(500):
+            action, force = apply_state_controller(K, obs)
+
+            # Apply the bounded control force
+            applied_force = float(np.clip(force, -10, 10))
+            env.unwrapped.force_mag = abs(applied_force)
+
+            obs, reward, terminated, truncated, _ = env.step(action)
+            forces.append(applied_force)
+
+            if terminated or truncated:
+                break
+
+        forces = np.array(forces)
+
+        # Align the initial force directions for comparison
+        if len(forces) > 0 and forces[0] > 0:
+            forces = -forces
+
+        all_forces[R_value] = forces
+
+    return all_forces
+
 
 def control(env, mp, mk, l, g, time_sleep=False, terminate=True, seed=None):
     """
@@ -83,13 +117,14 @@ def control(env, mp, mk, l, g, time_sleep=False, terminate=True, seed=None):
     #TODO: plot the states of the system ...
 
     obs, _ = env.reset(seed=seed)    # Reset the environment for a new episode
-    
+    states = [obs.copy()]
     A, B = linerized_cartpole_system(mp, mk, l, g)
     K = optimal_controller(A, B)    # Re-compute the optimal controller for the current R value
 
     for i in range(1000):
 
-        env.render()
+        if env.render_mode is not None:
+          env.render()
         if time_sleep:
             time.sleep(.1)
         
@@ -105,15 +140,16 @@ def control(env, mp, mk, l, g, time_sleep=False, terminate=True, seed=None):
         # apply action
         obs, reward, terminated, truncated, _ = env.step(action)
         done = terminated or truncated
-        
+        states.append(obs.copy())
         if terminate and done:
             print(f'Terminated after {i+1} iterations.')
             break
+    return np.array(states)
 
 # The main function
 def main(args):
     # Create a Gymnasium environment (CartPole-v1)
-    env = gym.make(args.env, render_mode="human")
+    env = gym.make(args.env, max_episode_steps=1000)
 
     # Get dimensionalities of actions and observations
     action_space_dim = get_space_dim(env.action_space)
@@ -130,11 +166,19 @@ def main(args):
     mp, mk, l, g = pole.masspole, pole.masscart, pole.length, pole.gravity
 
     if args.mode == "control":
-        control(env, mp, mk, l, g, args.time_sleep, terminate=True, seed=args.seed)
+        result = control(env, mp, mk, l, g, args.time_sleep,
+                        terminate=True, seed=args.seed)
+
     elif args.mode == "multiple_R":
-        multiple_R(env, mp, mk, l, g, args.time_sleep, terminate=True)
+      result = multiple_R(env, mp, mk, l, g, args.time_sleep,
+                          terminate=True, seed=args.seed)
+
+    else:
+        result = None
 
     env.close()
+    return result
+
 
 # Entry point of the script
 if __name__ == "__main__":

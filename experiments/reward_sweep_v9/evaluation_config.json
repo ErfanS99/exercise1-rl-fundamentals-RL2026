@@ -1,0 +1,7 @@
+{
+    "evaluation_turn_threshold_m":  1.5,
+    "result":  "Successful sweeping and stable balancing observed",
+    "evaluation_max_steps":  1000,
+    "model":  "reward_sweep_v9/model.ai",
+    "training_turn_threshold_m":  1.8
+}
